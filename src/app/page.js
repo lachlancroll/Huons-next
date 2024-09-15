@@ -1,101 +1,127 @@
-import Image from "next/image";
+"use client";
+
+import FileUpload from "@/components/FileUpload";
+import { useState } from "react";
+import PdfViewer from "@/components/PdfViewer";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [quesPdfArray, setQuesPdfArray] = useState(null);
+  const [ansPdfArray, setAnsPdfArray] = useState(null);
+  const [answers, setAnswers] = useState(null);
+  const [answerIndex, setAnswerIndex] = useState(0);
+  const [square, setSquare] = useState(null);
+  const [pageNumber, setPageNumber] = useState(1); // Store the current page number
+  const [file, setFile] = useState(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+
+
+
+  const createDownloadLink = (pdfData, title) => {
+    // Decode Base64 to binary data
+    const byteCharacters = atob(pdfData);
+    const byteNumbers = new Array(byteCharacters.length).fill().map((_, i) => byteCharacters.charCodeAt(i));
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+    // Generate download link
+    const url = URL.createObjectURL(blob);
+    return (
+      <li key={title}>
+        <a href={url} download={`${title}.pdf`}>Download {title}</a>
+      </li>
+    );
+  };
+
+  // Handle file submission
+  const handleSubmitAns = async (event) => {
+    event.preventDefault();
+
+    // Prepare FormData to include both the answers and the PDF file
+    const formData = new FormData();
+    formData.append('pdf', file);  // Assuming `file` is your file object
+    formData.append('answers', JSON.stringify(answers));  // Send `answers` as a JSON string
+
+    try {
+      const response = await fetch('http://192.168.1.114:4000/get_answers', {
+        method: 'POST',
+        body: formData,  // Send form data
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log(data)
+        setAnsPdfArray(data.pdf_list);  // Update state with the received PDF list
+      } else {
+        const errorText = await response.text();
+        console.error('Server error:', errorText);
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+    }
+  };
+
+
+  const handleCreateSquare = (newSquare) => {
+    setSquare(newSquare);
+    setAnswers(prev => {
+      // Create a shallow copy of the `prev` array
+      const updatedAnswers = [...prev];
+
+      // Ensure we are also copying the array we are updating
+      updatedAnswers[answerIndex] = [...updatedAnswers[answerIndex]];
+
+      // Push the new data to the correct place in the array
+      //console.log(updatedAnswers[answerIndex].length)
+      console.log(newSquare)
+      const topY = (newSquare.y - newSquare.rect.top) / (window.innerHeight * 0.8)
+      console.log("height", newSquare.height)
+      const bottomY = ((newSquare.y - newSquare.rect.top) + newSquare.height) / (window.innerHeight * 0.8)
+      if (updatedAnswers[answerIndex].length < 3) {
+        updatedAnswers[answerIndex].push([pageNumber, [topY, bottomY]]);
+      } else {
+        updatedAnswers[answerIndex][3] = [pageNumber, [topY, bottomY]];
+      }
+
+      console.log(updatedAnswers)
+
+      return updatedAnswers; // Return the updated array
+    });
+  }
+
+  return (
+    <div>
+      <FileUpload setPdfUrl={setPdfUrl} setPdfArray={setQuesPdfArray} setAnswers={setAnswers} file={file} setFile={setFile} />
+      <div className="container">
+        <div className="element">{answers ? <PdfViewer pdfUrl={pdfUrl} square={square} onCreateSquare={handleCreateSquare} pageNumber={pageNumber} setPageNumber={setPageNumber} /> : null}</div>
+        {answers && <div className="element">
+          <div>Please highlight {`${answers[answerIndex][0]} ${answers[answerIndex][1]}`}</div>
+          <div className="container">
+            <div className="element"><button onClick={() => { answerIndex > 0 && setAnswerIndex(prev => prev - 1) }}>{"<"}</button></div>
+            <div className="element"><button onClick={() => setAnswerIndex(prev => prev + 1)}>{">"}</button></div>
+          </div>
+          <div>
+            {answers[answerIndex].length <= 3 ? "X" : "✓"}
+            <button onClick={handleSubmitAns}>submit answers</button>
+          </div>
+        </div>}
+      </div>
+      {quesPdfArray && (
+        <div>
+          <h3>Download PDFs:</h3>
+          <ul>
+            {quesPdfArray.map((pdfObj) => createDownloadLink(pdfObj.pdf, pdfObj.title))}
+          </ul>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      )}
+      {ansPdfArray && (
+        <div>
+          <h3>Download Answer PDFs:</h3>
+          <ul>
+            {ansPdfArray.map((pdfObj) => createDownloadLink(pdfObj.pdf, pdfObj.title))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

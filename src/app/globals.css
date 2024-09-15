@@ -7,13 +7,6 @@
   --foreground: #171717;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   color: var(--foreground);
   background: var(--background);
@@ -24,4 +17,14 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+.container {
+  display: flex;
+  justify-content: space-between; /* space between the elements */
+}
+
+.element {
+  background-color: #f0f0f0;
+  flex: 1; /* Make both elements take up equal space */
 }
