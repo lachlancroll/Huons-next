@@ -10,12 +10,9 @@ export default function Home() {
   const [ansPdfArray, setAnsPdfArray] = useState(null);
   const [answers, setAnswers] = useState(null);
   const [answerIndex, setAnswerIndex] = useState(0);
-  const [square, setSquare] = useState(null);
   const [pageNumber, setPageNumber] = useState(1); // Store the current page number
   const [file, setFile] = useState(null);
-
-
-
+  const [numPages, setNumPages] = useState(null); // Store the total number of pages
 
   const createDownloadLink = (pdfData, title) => {
     // Decode Base64 to binary data
@@ -43,7 +40,7 @@ export default function Home() {
     formData.append('answers', JSON.stringify(answers));  // Send `answers` as a JSON string
 
     try {
-      const response = await fetch('http://192.168.1.114:4000/get_answers', {
+      const response = await fetch('http://192.168.68.53:4000/get_answers', {
         method: 'POST',
         body: formData,  // Send form data
       });
@@ -63,7 +60,9 @@ export default function Home() {
 
 
   const handleCreateSquare = (newSquare) => {
-    setSquare(newSquare);
+    if (!answers) {
+      return;
+    }
     setAnswers(prev => {
       // Create a shallow copy of the `prev` array
       const updatedAnswers = [...prev];
@@ -73,17 +72,13 @@ export default function Home() {
 
       // Push the new data to the correct place in the array
       //console.log(updatedAnswers[answerIndex].length)
-      console.log(newSquare)
       const topY = (newSquare.y - newSquare.rect.top) / (window.innerHeight * 0.8)
-      console.log("height", newSquare.height)
       const bottomY = ((newSquare.y - newSquare.rect.top) + newSquare.height) / (window.innerHeight * 0.8)
       if (updatedAnswers[answerIndex].length < 3) {
         updatedAnswers[answerIndex].push([pageNumber, [topY, bottomY]]);
       } else {
         updatedAnswers[answerIndex][3] = [pageNumber, [topY, bottomY]];
       }
-
-      console.log(updatedAnswers)
 
       return updatedAnswers; // Return the updated array
     });
@@ -93,22 +88,23 @@ export default function Home() {
     <div>
       <FileUpload setPdfUrl={setPdfUrl} setPdfArray={setQuesPdfArray} setAnswers={setAnswers} file={file} setFile={setFile} />
       <div className="container">
-        <div className="element">{answers ? <PdfViewer pdfUrl={pdfUrl} square={square} onCreateSquare={handleCreateSquare} pageNumber={pageNumber} setPageNumber={setPageNumber} /> : null}</div>
+        <div className="element">{pdfUrl ? <PdfViewer numPages={numPages} setNumPages={setNumPages} pdfUrl={pdfUrl} answers={answers} setAnswers={setAnswers} answerIndex={answerIndex} onCreateSquare={handleCreateSquare} pageNumber={pageNumber} setPageNumber={setPageNumber} /> : null}</div>
         {answers && <div className="element">
           <div>Please highlight {`${answers[answerIndex][0]} ${answers[answerIndex][1]}`}</div>
           <div className="container">
             <div className="element"><button onClick={() => { answerIndex > 0 && setAnswerIndex(prev => prev - 1) }}>{"<"}</button></div>
-            <div className="element"><button onClick={() => setAnswerIndex(prev => prev + 1)}>{">"}</button></div>
+            <div className="element"><button onClick={() => { answerIndex < (answers.length - 1) && setAnswerIndex(prev => prev + 1)}}>{">"}</button></div>
           </div>
           <div>
-            {answers[answerIndex].length <= 3 ? "X" : "✓"}
-            <button onClick={handleSubmitAns}>submit answers</button>
+            {answers[answerIndex].length <= 3 ? "X " : "✓ "}
+            <button className="button" onClick={handleSubmitAns}>submit answers</button>
+            <div>location: {answers[answerIndex][3] ? answers[answerIndex][3][1][0] : ""}, {answers[answerIndex][3] ? answers[answerIndex][3][1][1] : ""}</div>
           </div>
         </div>}
       </div>
       {quesPdfArray && (
         <div>
-          <h3>Download PDFs:</h3>
+          <h3 style={{backgroundColor: 'rgb(240, 240, 240)'}}>Download PDFs:</h3>
           <ul>
             {quesPdfArray.map((pdfObj) => createDownloadLink(pdfObj.pdf, pdfObj.title))}
           </ul>
@@ -116,7 +112,7 @@ export default function Home() {
       )}
       {ansPdfArray && (
         <div>
-          <h3>Download Answer PDFs:</h3>
+          <h3 style={{backgroundColor: 'rgb(240, 240, 240)'}}>Download Answer PDFs:</h3>
           <ul>
             {ansPdfArray.map((pdfObj) => createDownloadLink(pdfObj.pdf, pdfObj.title))}
           </ul>
