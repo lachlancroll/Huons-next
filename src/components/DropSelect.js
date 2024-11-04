@@ -9,7 +9,7 @@ const DropSelect = ({ index, options, onChange }) => {
             <select className="dropdown" id="dropdown" value={options[index]} onChange={onChange}>
                 {options.map((option, index) =>
                     (
-                        <option id={option} value={index}>{option}</option>
+                        <option key={option} value={index}>{option}</option>
                     )
                 )}
             </select>
