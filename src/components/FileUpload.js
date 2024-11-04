@@ -31,7 +31,7 @@ const FileUpload = ({setPdfUrl, setPdfArray, setAnswers, file, setFile}) => {
 
     const formData = new FormData();
     formData.append('pdf', file);
-    formData.append("format", options[formatIndex])
+    formData.append("format", formatOptions[formatIndex])
 
     const pdfBlob = new Blob([file], { type: 'application/pdf' });
     const pdfBlobUrl = URL.createObjectURL(pdfBlob);
