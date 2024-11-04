@@ -4,7 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist/legacy/build/pdf';
 
 // Set the worker for PDF.js
-GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.js'; // Use a static URL
+//GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.js'; // Use a static URL
+GlobalWorkerOptions.workerSrc="https://unpkg.com/pdfjs-dist@4.8.69/legacy/build/pdf.worker.min.mjs"
 
 const PdfViewer = ({ pdfUrl, numPages, setNumPages, pageNumber, setPageNumber, onCreateSquare, answerIndex, answers }) => {
   const [square, setSquare] = useState(null);
