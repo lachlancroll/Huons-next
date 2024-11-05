@@ -24,12 +24,25 @@ const FileUpload = ({setPdfUrl, setPdfArray, setAnswers, file, setFile}) => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!file) {
+    try {
+      const response = await fetch('http://3.27.164.225/');
+      if (response.ok) {
+        console.log(response)
+        setMessage('File uploaded successfully!');
+      } else {
+        const errorText = await response.text(); // Get the error message from the response
+        setMessage(`File upload failed: ${errorText}`);
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error); // Log the error
+      setMessage('Error uploading file.');
+    }
+    /*if (!file) {
       setMessage('Please select a file to upload.');
       return;
     }
 
-    const formData = new FormData();
+    /*const formData = new FormData();
     formData.append('pdf', file);
     //formData.append("format", formatOptions[formatIndex])
 
@@ -57,7 +70,7 @@ const FileUpload = ({setPdfUrl, setPdfArray, setAnswers, file, setFile}) => {
     } catch (error) {
       console.error('Error uploading file:', error); // Log the error
       setMessage('Error uploading file.');
-    }
+    }*/
     setIsDisabled(false);
   };
 
