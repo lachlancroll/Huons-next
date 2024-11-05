@@ -25,7 +25,7 @@ const FileUpload = ({setPdfUrl, setPdfArray, setAnswers, file, setFile}) => {
     event.preventDefault();
 
     try {
-      const response = await fetch('http://3.27.164.225/');
+      const response = await fetch('https://huonflask.duckdns.org/');
       if (response.ok) {
         console.log(response)
         setMessage('File uploaded successfully!');
