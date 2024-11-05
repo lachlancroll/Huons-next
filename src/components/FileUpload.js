@@ -38,7 +38,7 @@ const FileUpload = ({setPdfUrl, setPdfArray, setAnswers, file, setFile}) => {
     setPdfUrl(pdfBlobUrl); // Set the URL for the PdfViewer
     setIsDisabled(true);
     try {
-      const response = await fetch('http://192.168.68.53:4000/upload', {
+      const response = await fetch('https://192.168.68.53:4000/upload', {
         method: 'POST',
         body: formData,
       });
