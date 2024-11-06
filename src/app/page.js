@@ -13,6 +13,7 @@ export default function Home() {
   const [pageNumber, setPageNumber] = useState(1); // Store the current page number
   const [file, setFile] = useState(null);
   const [numPages, setNumPages] = useState(null); // Store the total number of pages
+  const [isDisabled, setIsDisabled] = useState(false);
 
   const createDownloadLink = (pdfData, title) => {
     // Decode Base64 to binary data
@@ -40,7 +41,7 @@ export default function Home() {
     formData.append('answers', JSON.stringify(answers));  // Send `answers` as a JSON string
 
     try {
-      const response = await fetch('http://192.168.68.53:4000/get_answers', {
+      const response = await fetch('http://192.168.68.55:4000/get_answers', {
         method: 'POST',
         body: formData,  // Send form data
       });

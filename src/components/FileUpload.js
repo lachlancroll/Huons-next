@@ -7,8 +7,8 @@ import DropSelect from './DropSelect';
 const FileUpload = ({setPdfUrl, setPdfArray, setAnswers, file, setFile}) => {
   const [message, setMessage] = useState('');
   const [isDisabled, setIsDisabled] = useState(false);
-  const [formatIndex, setFormatIndex] = useState(0)
-  const [formatOptions, setFormatOptions] = useState(["James Ruse", "HSC"])
+  const [format, setFormat] = useState(0)
+  const [formatOptions, setFormatOptions] = useState([{option: "James Ruse", value: "^(100|[1-9]?[0-9])\\)$"}, {option: "HSC", value: "^Question\\s+\\d+.*$"}])
 
   // Handle file selection
   const handleFileChange = (event) => {
@@ -24,26 +24,15 @@ const FileUpload = ({setPdfUrl, setPdfArray, setAnswers, file, setFile}) => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    try {
-      const response = await fetch('https://huonflask.duckdns.org/');
-      if (response.ok) {
-        console.log(response)
-        setMessage('File uploaded successfully!');
-      } else {
-        const errorText = await response.text(); // Get the error message from the response
-        setMessage(`File upload failed: ${errorText}`);
-      }
-    } catch (error) {
-      console.error('Error uploading file:', error); // Log the error
-      setMessage('Error uploading file.');
-    }
-    /*if (!file) {
+    if (!file) {
       setMessage('Please select a file to upload.');
       return;
     }
 
-    /*const formData = new FormData();
+    const formData = new FormData();
     formData.append('pdf', file);
+    formData.append('pattern', format);
+    formData.append('quesNum', quesNum);
     //formData.append("format", formatOptions[formatIndex])
 
     const pdfBlob = new Blob([file], { type: 'application/pdf' });
@@ -51,7 +40,7 @@ const FileUpload = ({setPdfUrl, setPdfArray, setAnswers, file, setFile}) => {
     setPdfUrl(pdfBlobUrl); // Set the URL for the PdfViewer
     setIsDisabled(true);
     try {
-      const response = await fetch('https://192.168.68.53:4000/upload', {
+      const response = await fetch('http://192.168.68.55:4000/upload', {
         method: 'POST',
         body: formData,
       });
@@ -70,12 +59,27 @@ const FileUpload = ({setPdfUrl, setPdfArray, setAnswers, file, setFile}) => {
     } catch (error) {
       console.error('Error uploading file:', error); // Log the error
       setMessage('Error uploading file.');
-    }*/
+    }
     setIsDisabled(false);
   };
 
-  const handleFormatChange = (index) => {
-    setFormatIndex(index);
+  const handleFormatChange = (event) => {
+    console.log(event)
+    setFormat(event.target.value);
+  }
+
+  const [quesNum, setQuesNum] = useState(20);
+  const [tempQuesNum, setTempQuesNum] = useState(20);
+  const maxQues = 40
+
+  const handleQuesChange = (event) => {
+    const num = Number(event.target.value);  // Convert the value to a number
+    if (num >= 1 && num <= maxQues) {
+      setQuesNum(num);
+    } else {
+      setTempQuesNum
+      setQuesNum(quesNum); // Reset to current page if invalid
+    }
   }
 
     return (
@@ -87,7 +91,17 @@ const FileUpload = ({setPdfUrl, setPdfArray, setAnswers, file, setFile}) => {
           {isDisabled ? <Spinner/>: <></>}
         </form>
         {message && <p>{message}</p>}
-        <DropSelect index={formatIndex} options={formatOptions} onChange={handleFormatChange}></DropSelect>
+        <DropSelect value={format} options={formatOptions} onChange={handleFormatChange}></DropSelect>
+        Input final question page: 
+        <input
+          type="number"
+          id="pagenum"
+          value={tempQuesNum}
+          onChange={(e) => setTempQuesNum(e.target.value)}
+          min={1}
+          max={maxQues}
+          onBlur={handleQuesChange}
+        />
       </div>
     );
   };
